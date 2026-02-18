@@ -19,28 +19,38 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
 
+      # ✅ Get AWS Account ID dynamically
+      - name: Get AWS Account ID
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          echo "ACCOUNT_ID=$ACCOUNT_ID" >> $GITHUB_ENV
+
+      # ✅ Login to ECR
       - name: Login to Amazon ECR
         run: |
           aws ecr get-login-password --region us-east-1 | \
           docker login --username AWS --password-stdin \
-          <ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com
+          $ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com
 
+      # ✅ Build & Tag Docker Image
       - name: Build Image
         run: |
           docker build -t spring-react-app .
           docker tag spring-react-app:latest \
-          <ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/spring-react-app:latest
+          $ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/spring-react-app:latest
 
+      # ✅ Push Image
       - name: Push Image
         run: |
-          docker push <ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/spring-react-app:latest
+          docker push $ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/spring-react-app:latest
 
+      # ✅ Create Dockerrun file dynamically
       - name: Create Dockerrun file
         run: |
           echo '{
             "AWSEBDockerrunVersion": "1",
             "Image": {
-              "Name": "<ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/spring-react-app:latest",
+              "Name": "'"$ACCOUNT_ID"'.dkr.ecr.us-east-1.amazonaws.com/spring-react-app:latest",
               "Update": "true"
             },
             "Ports": [{ "ContainerPort": "5000" }]
@@ -49,7 +59,7 @@ jobs:
       - name: Zip for EB
         run: zip deploy.zip Dockerrun.aws.json
 
-      - name: Deploy to EB
+      - name: Deploy to Elastic Beanstalk
         uses: einaregilsson/beanstalk-deploy@v21
         with:
           application_name: spring-react-app
@@ -57,3 +67,5 @@ jobs:
           version_label: ${{ github.sha }}
           region: us-east-1
           deployment_package: deploy.zip
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
