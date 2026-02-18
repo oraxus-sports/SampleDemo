@@ -63,7 +63,7 @@ jobs:
         uses: einaregilsson/beanstalk-deploy@v21
         with:
           application_name: spring-react-app
-          environment_name: spring-react-app-env
+          environment_name: Spring-react-app-env
           version_label: ${{ github.sha }}
           region: us-east-1
           deployment_package: deploy.zip
