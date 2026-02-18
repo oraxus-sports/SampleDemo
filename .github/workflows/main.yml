@@ -52,8 +52,8 @@ jobs:
       - name: Deploy to EB
         uses: einaregilsson/beanstalk-deploy@v21
         with:
-          application_name: spring-react-docker-app
-          environment_name: spring-react-docker-env
+          application_name: spring-react-app
+          environment_name: spring-react-app-env
           version_label: ${{ github.sha }}
           region: us-east-1
           deployment_package: deploy.zip
